@@ -1,0 +1,105 @@
+---
+title: "Decision Trees, Random Forests e Regressão Logística"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(rattle)
+library(rpart)
+library(rpart.plot)
+library(RColorBrewer)
+library(Amelia)
+library(randomForest)
+```
+
+O objetivo do problema proposto é prever quando uma criança irá nascer com menos de 2,5kg de  massa corporal. Para tanto, é utilizado a variável "low" com valores binários: 1 para crianças que nascem com um valor inferior à 2,5kg e 0 para valores maiores que 2,5kg. 
+
+```{r}
+dados1 <- read.csv("https://raw.githubusercontent.com/Efsilvaa/EPSMLRepo/master/Data/birthwt.csv")
+fatores <- c('low','race','smoke','ht','ui')
+dados1[fatores] <- lapply(dados1[fatores], as.factor)
+
+summary(dados1)
+```
+A funçao missmap da library Amelia é utilizada para identificar os missing values. 
+```{r}
+missmap(dados1,main="missing values vs observed")
+``` 
+  
+    
+    
+  
+Como não há valores faltantes podemos dar continuidade à construção dos modelos.
+
+Visualização dos dados:  
+```{r}
+plot1 <- ggplot(data=dados1, aes(bwt))+geom_density()
+plot1
+```
+
+Os dados são entao divididos em dados de treino e dados de teste.
+
+```{r}
+train.index <- sample((nrow(dados1)), 0.7*nrow(dados1))
+train <- dados1[train.index,]
+test <- dados1[-train.index,]
+
+```
+
+1º Modelo - Decision Trees
+```{r}
+decisiontree <- rpart(data=train, low ~ race + smoke + ht + ui + age + lwt + ftv, method = "class" )
+summary(decisiontree)
+```
+```{r}
+fancyRpartPlot(decisiontree)
+```
+
+```{r}
+prediction <- predict(decisiontree, test, type="class")
+table(prediction, test$low)
+```
+
+```{r}
+prop.table(table(prediction, test$low))
+```
+Através das decision trees foi possível alcançar aproximadamente 65% de acurácia.
+
+
+2º Modelo - Random Forests
+
+```{r}
+randomforest <- randomForest(data=train, low ~ race + smoke + ht + ui + age + lwt + ftv, importance = TRUE, ntree=3000)
+varImpPlot(randomforest)
+```
+
+```{r}
+prediction1 <- predict(randomforest, test, type="class")
+table(prediction1, test$low)
+
+prop.table(table(prediction1,test$low))
+```
+Com a random forest a acurácia foi de aproximadamente 61%.
+
+3º Modelo - Regressão Logística
+```{r}
+reglog <- glm(data=train, low ~ race + smoke + ht + ui + age + lwt + ftv, family = binomial(link = "logit") )
+summary(reglog)
+```
+Podemos observar que as variáveis ht e smoke (histórico de hipertensão e uso de cigarro durante gravidez) possuem os menores p-values. O que sugere uma forte associação entre a criança nascer com menos de 2,5kg e estas variáveis.
+ 
+```{r}
+anova(reglog, test="Chisq")
+```
+
+```{r}
+prediction_prob <- predict(reglog, newdata=test,type='response')
+prediction2 <- ifelse(prediction_prob>0.5,1,0)
+table(prediction2,test$low)
+```
+```{r}
+prop.table(table(prediction2,test$low))
+```
+
+Neste modelo a acurácia alcançada foi de 77,18%

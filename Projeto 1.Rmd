@@ -1,0 +1,61 @@
+---
+title: "Regressao Linear"
+output: html_document
+---
+Regressão Linear e múltipla:
+
+. Problema:  
+
+Previsão do preço dos imóveis baseado nos dados de vendas passadas   
+
+. Variável dependente  
+
+Preço  
+
+. Atributos/Features: 
+
+Área Construída, quantidade de garagens, quantidade de quartos.---
+
+
+```{r}
+
+library(ggplot2)
+library(readxl)
+dados <- read.csv("https://raw.githubusercontent.com/Efsilvaa/EPSMLRepo/master/Data/housingSmall2.csv")
+colnames(dados)[2] <- "area"
+colnames(dados)[3] <- "garagem"
+colnames(dados)[4] <- "quartos"
+colnames(dados)[5] <- "preco"
+
+```
+
+Visualização dos dados:
+
+```{r}
+plot1 <- ggplot(dados)+geom_point(aes(x=area,y=preco))+xlab("Area x 100m2")+ylab("Preço x R$10000,00")
+plot1
+```
+
+Neste modelo não será realizada a separação de dados em dados de treinamento e dados de teste. Isto se deve ao fato de haver poucos dados disponíveis para tanto.
+
+```{r}
+lr <- lm(data=dados, preco ~ area)
+summary(lr)
+```
+```{r}
+plot(lr)
+```
+```{r}
+plot2 <- plot1 + geom_abline(intercept = lr$coefficients[1],slope = lr$coefficients[2])
+plot2
+```
+Novo modelo utilizando Regressao multiplica. O numero de quartos e a quantidade de vagas na garagem é agora introduzido como feature.
+```{r}
+mr <- lm(data=dados,preco ~ area+garagem+quartos) 
+summary(mr)
+```
+
+```{r}
+plot(mr)
+```
+
