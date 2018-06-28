@@ -1,0 +1,62 @@
+---
+title: "Regressao Multipla Caso BlueSky"
+output: html_document
+---
+```{r}
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+BlueSky_Single_Leg_demand <- read_excel("C:/Users/Usuario/Downloads/BlueSky_Single-Leg_demand.xls", 
+    skip = 5)
+dados <- BlueSky_Single_Leg_demand
+colnames(dados)[1] <- "date"
+colnames(dados)[2] <- "demanda"
+plot1 <- ggplot(data=dados, aes(demanda))+geom_density()
+plot1
+
+plot2 <- ggplot(dados, aes(x=date,y=demanda))+geom_line()
+plot2
+```
+                                                                        
+                                                                        Cria-se 4 novas colunas que identificam o mês, o dia da semana, e os feriados. 
+
+```{r}
+dados$month <- months(dados$date)
+dados$day <- weekdays(dados$date)
+
+dados$month <- as.factor(dados$month)
+dados$day <- as.factor(dados$day)
+
+#Cria-se a coluna para os feriados
+
+dados$feriado <- c(0:0) 
+
+
+#Em uma breve pesquisa na internet é possível encontrar importantes datas comemorativas nos Estados Unidos, como por exemplo: 14/02, 04/07, 22/10, 17/03.
+dados$date <- as.factor(dados$date)
+dados$feriado[dados$date == "2006-03-17"]<- 1
+dados$feriado[dados$date == "2006-04-07"]<- 1
+dados$feriado[dados$date == "2006-10-22"]<- 1
+dados$feriado[dados$date == "2007-02-14"]<- 1
+
+dados$feriado <- as.factor(dados$feriado)
+
+```
+
+
+
+```{r}
+multreg <- lm(data=dados, demanda ~ day + month + feriado)
+summary(multreg)
+```
+
+
+
+```{r}
+plot(multreg)
+prediction <- predict(multreg, novosdados = dados )
+dados$date <- as.Date(dados$date)
+plot3 <- ggplot(data=dados, aes(x=date,y=demanda)) + geom_line()
+plot4 <- plot3 + geom_line(aes(x=dados$date,y=prediction), color = "red")
+plot4
+```
