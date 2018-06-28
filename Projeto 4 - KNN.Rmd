@@ -1,0 +1,46 @@
+---
+title: "Projeto 4 - KNN"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(caret)
+library(Amelia)
+load("C:/Users/Usuario/Downloads/wine_data.Rdata")
+missmap(wine_df, main="")
+```
+   
+    Como não há dados faltantes, continua-se a modelagem do problema com o processamento dos dados:
+  
+  
+```{r}
+funcao_norm <- function(x) {  (x-min(x)) / (max(x) - min(x))  }
+wine_norm <- as.data.frame(lapply(wine_df[,-1],funcao_norm)) #V1 é excluída para não ser normalizada pois é uma categoria.
+
+summary(wine_norm)
+```
+
+   Dividindo os dados em dados de treinamento e teste :
+
+```{r}
+
+wine_norm$V1 <- wine_df$V1 #V1 é incluida no conjunto de dados normalizados
+train.index <- sample((nrow(wine_norm)), 0.7*nrow(wine_norm))
+treino <- wine_norm[train.index,]
+teste <- wine_norm[-train.index,]
+```
+
+
+
+```{r}
+ctrl <- trainControl(method = "repeatedcv",repeats = 3) 
+
+modeloknn <- train(data=treino, V1 ~ V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 +V10 + V11 + V12 + V13 + V14, method="knn", trControl = ctrl,tuneLength = 20)
+
+modeloknn
+```
+```{r}
+plot(modeloknn)
+```
+
